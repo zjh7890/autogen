@@ -1,0 +1,87 @@
+<#import "./utils" as utils>
+package ${packName};
+
+import org.springframework.stereotype.Repository;
+import javax.annotation.Resource;
+import java.util.List;
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.stereotype.Service;
+
+<#if type == 'query'>
+
+</#if>
+
+
+/**
+ * @author zjh
+ **/
+@Repository
+public class ${name} implements ${interName} {
+    <#assign mapper_instance = mapper.interName?uncap_first>
+    @Resource
+    private ${mapper.interName} ${mapper_instance};
+<#if converter??>
+    <#assign converter_instance = converter.name?uncap_first>
+    @Resource
+    private ${converter.name} ${converter_instance};
+</#if>
+
+<#if type == 'query'>
+    public static ${mapper.example.name} buildExample(${condition.name} condition) {
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="condition" />
+        return example;
+    }
+
+    /**
+      * 是个注释好吧
+      */
+    @Override
+    public long countByCondition(${condition.name} condition) {
+        ${mapper.example.name} example = buildExample(condition);
+        return ${mapper_instance}.countByExample(example);
+    }
+
+    @Override
+    public List<${model.name}> selectByCondition(${condition.name} condition) {
+        ${mapper.example.name} example = buildExample(condition);
+        RowBounds bounds = new RowBounds(
+                        condition.getOffset() != null ? condition.getOffset() : RowBounds.NO_ROW_OFFSET,
+                        condition.getLimit() != null ? condition.getLimit() : RowBounds.NO_ROW_LIMIT
+                );
+        return ${converter_instance}.convert2Models(
+                ${mapper_instance}.selectByExampleWithRowbounds(example, bounds));
+    }
+
+</#if>
+<#if type == 'add' || type == 'upsert'>
+    @Override
+    public int insertSelective(${model.name} record) {
+        return ${mapper_instance}.insertSelective(${converter_instance}.convert2Entity(record), example);
+    }
+
+</#if>
+<#if type == 'update' || type == 'upsert'>
+    @Override
+    public int updateByConditionSelective(${model.name} record, ${condition.name} condition) {
+        ${mapper.example.name} example = buildExample(condition);
+        return ${mapper_instance}.updateByExampleSelective(${converter_instance}.convert2DO(record), example);
+    }
+
+</#if>
+<#if type == 'delete'>
+    @Override
+    <#-- 当删除条件只有 id 时, 用 deleteByPrimaryKey 删除 -->
+<#if condition??>
+    public int ${funcName}(${condition.name} condition) {
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="condition" />
+        return ${mapper_instance}.deleteByExample(example);
+    }
+<#else>
+    public int deleteById(${__BASE["id"].type.name} id) {
+        return ${mapper_instance}.deleteByPrimaryKey(id);
+    }
+</#if>
+
+
+</#if>
+}

@@ -1,0 +1,16 @@
+package ${packName};
+
+import lombok.Data;
+
+import java.util.List;
+
+/**
+ * @author zjh
+ */
+@Data
+public class ${name} {
+<#list __BASE? keys as fieldName>
+    private ${__BASE[fieldName].type.name} ${fieldName};
+
+</#list>
+}

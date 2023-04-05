@@ -1,0 +1,34 @@
+package ${packName};
+
+import lombok.Data;
+
+import javax.validation.constraints.Max;
+import java.util.List;
+
+/**
+ * @author zjh
+ */
+@Data
+public class ${name} {
+<#if type == 'query'>
+    /**
+     * 分页页大小
+     **/
+    @Max(value = 50, message = "limit 最大不能超过 50")
+    private Integer limit;
+
+    /**
+     * 分页偏移量
+     **/
+    @Max(value = 1000, message = "offset 最大不能超过 1000")
+    private Integer offset;
+
+</#if>
+<#list sqlParsed.inputs as input>
+<#if __BASE[sqlParsed["input2VarMap"][input]].docToken?? && withComment?? && withComment == true>
+    ${__BASE[sqlParsed["input2VarMap"][input]].docToken.content}
+</#if>
+    private ${__BASE[sqlParsed["input2VarMap"][input]].type.name} ${input};
+
+</#list>
+}

@@ -1,0 +1,50 @@
+package ${packName};
+
+import java.util.List;
+import java.util.Date;
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+
+<#if type == 'query'>
+
+</#if>
+
+/**
+ * @author zjh
+ **/
+@Service
+public class ${name} {
+    <#assign repository_instance = repository.interName?uncap_first>
+    @Resource
+    private ${repository.interName} ${repository_instance};
+
+<#if converter??>
+    <#assign converter_instance = converter.name?uncap_first>
+    @Resource
+    private ${converter.name} ${converter_instance};
+</#if>
+
+<#if type == 'query'>
+    public ${service.PageRes.name}<${dto.name}> ${funcName}(${req.name} req) {
+        ${repository.condition.name} condition = ${converter_instance}.convert(req);
+        long total = ${repository_instance}.countByCondition(condition);
+        List<${repository.model.name}> objs = ${repository_instance}.selectByCondition(condition);
+        List<${dto.name}> dtos = ${converter_instance}.convert2Dtos(objs);
+        return new ${service.PageRes.name}<>(total, dtos);
+    }
+</#if>
+
+<#if type == 'delete'>
+<#if (repository.condition)??>
+    public int ${funcName}(${req.name} req) {
+        ${repository.condition.name} condition = ${converter_instance}.convert(req);
+        return ${repository_instance}.${repository.funcName}(condition);
+    }
+<#else>
+    public int ${funcName}(${req.name} req) {
+        return ${repository_instance}.deleteById(req.getId());
+    }
+</#if>
+</#if>
+
+}

@@ -1,0 +1,43 @@
+package ${packName};
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import javax.annotation.Resource;
+
+/**
+ * @Author: zjh
+ */
+<#compress>
+@RestController
+<#if url_prefix??>
+@RequestMapping("${url_prefix}")
+</#if>
+</#compress>
+
+public class ${name} {
+    <#assign service_instance=service.name?uncap_first>
+    @Resource
+    private ${service.name} ${service_instance};
+
+<#if type == 'query'>
+    @${http_method}Mapping(value = "${url}")
+    public ${CommonPageResponse.name}<${service.dto.name}> ${funcName}(${service.req.name} req) {
+        ${CommonPageResponse.name}<${service.dto.name}> res = new ${CommonPageResponse.name}<>();
+        ${service.PageRes.name}<${service.dto.name}> data = ${service_instance}.${service.funcName}(req);
+        return res.success(data);
+    }
+</#if>
+
+<#if type == 'delete'>
+    @${http_method}Mapping(value = "${url}")
+    public ${CommonResponse.name}<Void> ${funcName}(${service.req.name} req) {
+        ${CommonResponse.name}<Void> res = new ${CommonResponse.name}<>();
+        ${service_instance}.${service.funcName}(req);
+        return res.success(null);
+    }
+</#if>
+
+}

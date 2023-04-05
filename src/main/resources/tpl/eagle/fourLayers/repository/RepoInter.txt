@@ -1,0 +1,9 @@
+package ${interPackName};
+
+import java.util.List;
+
+/**
+ * @author zjh
+ **/
+public interface ${interName} {
+}

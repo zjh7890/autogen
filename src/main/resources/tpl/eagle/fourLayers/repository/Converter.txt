@@ -1,0 +1,26 @@
+package ${packName};
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+
+import java.util.List;
+
+/**
+ * @author zjh
+ **/
+@Mapper(componentModel = "spring")
+public interface ${name} {
+<#if type == 'query'>
+    ${repository.model.name} convert2Model(${mapper.entity.name} entity);
+
+    List<${repository.model.name}> convert2Models(List<${mapper.entity.name}> entities);
+
+</#if>
+<#if type == 'add' || type == 'upsert'>
+    ${mapper.entity.name} convert2Entity(${repository.model.name} model);
+
+    List<${mapper.entity.name}> convert2Entities(List<${repository.model.name}> models);
+
+</#if>
+}

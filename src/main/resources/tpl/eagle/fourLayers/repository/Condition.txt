@@ -1,0 +1,22 @@
+package ${packName};
+
+import lombok.Data;
+
+import java.util.Date;
+
+/**
+ * @author zjh
+ **/
+@Data
+public class ${name} {
+<#if type == 'query'>
+    private Integer offset;
+
+    private Integer limit;
+
+</#if>
+<#list sqlParsed.inputs as input>
+    private ${__BASE[sqlParsed["input2VarMap"][input]].type.name} ${input};
+
+</#list>
+}

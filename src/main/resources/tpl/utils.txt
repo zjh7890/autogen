@@ -1,0 +1,52 @@
+<#function dashedToCamel(s)>
+    <#return s
+    ?replace('(^_+)|(_+$)', '', 'r')
+    ?replace('\\_+(\\w)?', ' $1', 'r')
+    ?replace('([A-Z])', ' $1', 'r')
+    ?capitalize
+    ?replace(' ' , '')
+    ?uncap_first
+    >
+</#function>
+
+<#macro buildExample sqlParsed condition_var judgeNull=true indent="">
+<#assign opMap = {"=": "EqualTo", ">=": "GreaterThanOrEqualTo", "<=": "LessThanOrEqualTo", ">": "GreaterThan", "<": "LessThan"}>
+${indent}        ${mapper.example.name} example = new ${mapper.example.name}();
+    <#list sqlParsed.nodes as node_list>
+        <#assign criteriaVar = (node_list_index == 0)?string('criteria', 'criteria' + (node_list_index + 1))>
+        <#if node_list_index == 0>
+${indent}        ${mapper.example.name}.Criteria ${criteriaVar} = example.createCriteria();
+        <#else>
+${indent}        ${mapper.example.name}.Criteria ${criteriaVar} = example.or();
+        </#if>
+        <#list node_list as node>
+            <#assign varName = utils.dashedToCamel(node.lhs.content)?cap_first>
+            <#if opMap[node.content]??>
+                <#assign inputName = utils.dashedToCamel(node.rhs.content[1..])?cap_first>
+            <#if judgeNull>
+${indent}        if (${condition_var}.get${inputName}() != null) {
+${indent}            ${criteriaVar}.and${varName}${opMap[node.content]}(${condition_var}.get${inputName}());
+${indent}        }
+            <#else>
+${indent}        ${criteriaVar}.and${varName}${opMap[node.content]}(${condition_var}.get${inputName}());
+            </#if>
+            <#elseif node.content == 'in'>
+                <#assign inputName = utils.dashedToCamel(node.rhs.content)?cap_first>
+            <#if judgeNull>
+${indent}        if (!CollectionUtils.isEmpty(${condition_var}.get${inputName}())) {
+${indent}            ${criteriaVar}.and${varName}In(${condition_var}.get${inputName}());
+${indent}        }
+            <#else>
+${indent}        ${criteriaVar}.and${varName}In(${condition_var}.get${inputName}());
+            </#if>
+            <#elseif node.content == 'is null'>
+${indent}        ${criteriaVar}.and${varName}IsNull();
+            <#elseif node.content == 'is not null'>
+${indent}        ${criteriaVar}.and${varName}IsNotNull();
+            <#else>
+ ${indent}           holy shit unknown 运算符号
+            </#if>
+        </#list>
+
+    </#list>
+</#macro> 

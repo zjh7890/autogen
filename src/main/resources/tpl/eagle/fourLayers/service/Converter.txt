@@ -1,0 +1,39 @@
+package ${packName};
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+
+import java.util.List;
+
+<#if type == 'query'>
+
+</#if>
+<#if type == 'delete'>
+
+</#if>
+
+/**
+ * @author zjh
+ **/
+@Mapper(componentModel = "spring")
+public interface ${name} {
+<#if type == 'query'>
+    ${repository.condition.name} convert(${service.req.name} req);
+
+    ${service.dto.name} convert2Dto(${repository.model.name} dto);
+
+<#list convertMap? keys as key>
+    <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
+    || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd")
+    </#if>
+</#list>
+    List<${service.dto.name}> convert2Dtos(List<${repository.model.name}> dtos);
+
+</#if>
+<#if type == 'delete' && (repository.condition)??>
+    ${repository.condition.name} convert(${service.req.name} req);
+
+</#if>
+}
