@@ -1,0 +1,77 @@
+package ${packName};
+
+import com.alibaba.dubbo.config.annotation.Service;
+
+import javax.annotation.Resource;
+import javax.validation.Valid;
+
+/**
+ * @Author: zjh
+ */
+@Service
+public class ${name} implements ${interName} {
+    <#assign service_instance=service.name?uncap_first>
+    @Resource
+    private ${service.name} ${service_instance};
+
+<#if type == 'id'>
+    /**
+     * path: ${url_prefix???string(url_prefix, "")}${url}
+     */
+    @Override
+    public ${CommonResponse.name}<${service.dto.name}> ${funcName}(@Valid ${service.req.name} req) {
+        ${CommonResponse.name}<${service.dto.name}> res = new ${CommonResponse.name}<>();
+        ${service.dto.name} data = ${service_instance}.${service.funcName}(req);
+        return res.success(data);
+    }
+
+</#if>
+<#if type == 'query'>
+    /**
+     * path: ${url_prefix???string(url_prefix, "")}${url}
+     */
+    @Override
+    public ${CommonPageResponse.name}<${service.dto.name}> ${funcName}(@Valid ${service.req.name} req) {
+        ${CommonPageResponse.name}<${service.dto.name}> res = new ${CommonPageResponse.name}<>();
+        ${service.PageRes.name}<${service.dto.name}> data = ${service_instance}.${service.funcName}(req);
+        return res.success(data);
+    }
+
+</#if>
+<#if type == 'add'>
+    /**
+     * path: ${url_prefix???string(url_prefix, "")}${url}
+     */
+    @Override
+    public ${CommonResponse.name}<Void> ${funcName}(@Valid ${service.req.name} req) {
+        ${CommonResponse.name}<Void> res = new ${CommonResponse.name}<>();
+        ${service_instance}.${service.funcName}(req);
+        return res.success(null);
+    }
+
+</#if>
+<#if type == 'update' || type == 'upsert'>
+    /**
+     * path: ${url_prefix???string(url_prefix, "")}${url}
+     */
+    @Override
+    public ${CommonResponse.name}<Void> ${funcName}(@Valid ${service.req.name} req) {
+        ${CommonResponse.name}<Void> res = new ${CommonResponse.name}<>();
+        ${service_instance}.${service.funcName}(req);
+        return res.success(null);
+    }
+
+</#if>
+<#if type == 'delete'>
+    /**
+     * path: ${url_prefix???string(url_prefix, "")}${url}
+     */
+    @Override
+    public ${CommonResponse.name}<Void> ${funcName}(@Valid ${service.req.name} req) {
+        ${CommonResponse.name}<Void> res = new ${CommonResponse.name}<>();
+        ${service_instance}.${service.funcName}(req);
+        return res.success(null);
+    }
+
+</#if>
+}

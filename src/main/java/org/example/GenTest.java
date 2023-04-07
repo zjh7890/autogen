@@ -1,5 +1,6 @@
 package org.example;
 
+import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -37,6 +38,9 @@ public class GenTest {
 
 
     public static void main(String[] args) {
+        if (true) {
+//            DateUtil.parseDate()
+        }
 //        if (true) {
 //            System.out.println(new File("/Users/zjh/IdeaProjects/autogen/src/main/resources/tpl/eagle/FourLayers/service/service.txt").exists());
 //            return;

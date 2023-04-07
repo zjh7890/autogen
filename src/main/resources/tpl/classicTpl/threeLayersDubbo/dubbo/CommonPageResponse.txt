@@ -1,0 +1,24 @@
+package ${packName};
+
+import lombok.Data;
+
+import java.util.List;
+import java.io.Serializable;
+
+
+/**
+ * @Author: zjh
+ */
+@Data
+public class CommonPageResponse<T> implements Serializable {
+    private Integer code;
+    private String msg;
+    private PageRes<T> data;
+
+    public CommonPageResponse<T> success(PageRes<T> data) {
+        this.data = data;
+        this.code = 0;
+        this.msg = "success";
+        return this;
+    }
+}

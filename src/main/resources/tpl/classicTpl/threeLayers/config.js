@@ -46,11 +46,6 @@ function getLayers() {
                             specifyType: "type",
                             specify: "Date",
                             type: "String",
-                        },
-                        {
-                            specifyType: "field",
-                            specify: "createTime",
-                            type: "String",
                         }
                     ],
                     couldDepends: {
@@ -109,7 +104,7 @@ function getLayers() {
                             // 函数
                             funcName: "query${ServiceName}ById",
                             http_method: "Post",
-                            url: "/${ServiceName}/queryById",
+                            url: "/queryById",
                         },
                         service: {
                             funcName: "query${ServiceName}ById",
@@ -151,7 +146,7 @@ function getLayers() {
                             // 函数
                             funcName: "query${ServiceName}",
                             http_method: "Post",
-                            url: "/${ServiceName}/query",
+                            url: "/query",
                         },
                         service: {
                             funcName: "query${ServiceName}",
@@ -195,7 +190,7 @@ function getLayers() {
                             // 函数
                             funcName: "add${ServiceName}",
                             http_method: "Post",
-                            url: "/${ServiceName}/add",
+                            url: "/add",
                         },
                         service: {
                             funcName: "add${ServiceName}",
@@ -230,7 +225,7 @@ function getLayers() {
                             // 函数
                             funcName: "update${ServiceName}",
                             http_method: "Post",
-                            url: "/${ServiceName}/update",
+                            url: "/update",
                         },
                         service: {
                             funcName: "update${ServiceName}",
@@ -265,7 +260,7 @@ function getLayers() {
                             // 函数
                             funcName: "upsert${ServiceName}",
                             http_method: "Post",
-                            url: "/${ServiceName}/upsert",
+                            url: "/upsert",
                         },
                         service: {
                             funcName: "upsert${ServiceName}",
@@ -300,7 +295,7 @@ function getLayers() {
                             // 函数
                             funcName: "delete${ServiceName}",
                             http_method: "Post",
-                            url: "/${ServiceName}/delete",
+                            url: "/delete",
                         },
                         service: {
                             funcName: "delete${ServiceName}",

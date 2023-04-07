@@ -20,7 +20,7 @@ public interface ${name} {
 <#list convertMap? keys as key>
     <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
     || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
-    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd")
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
     </#if>
 </#list>
     ${service.dto.name} convert2DtoDetail(${mapper.entity.name} dto);
@@ -31,7 +31,7 @@ public interface ${name} {
 <#list convertMap? keys as key>
     <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
     || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
-    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd")
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
     </#if>
 </#list>
     ${service.dto.name} convert2Dto(${mapper.entity.name} dto);
@@ -44,7 +44,7 @@ public interface ${name} {
 <#list convertMap? keys as key>
     <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
     || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
-    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd")
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
     </#if>
 </#list>
     ${mapper.entity.name} convert(${service.req.name} dto);

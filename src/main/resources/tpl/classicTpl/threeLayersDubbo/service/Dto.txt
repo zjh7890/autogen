@@ -1,0 +1,18 @@
+package ${packName};
+
+import lombok.Data;
+
+import java.util.List;
+import java.io.Serializable;
+
+
+/**
+ * @author zjh
+ */
+@Data
+public class ${name} implements Serializable {
+<#list __BASE? keys as fieldName>
+    private ${__BASE[fieldName].type.name} ${fieldName};
+
+</#list>
+}

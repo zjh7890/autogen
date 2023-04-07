@@ -9,7 +9,7 @@
     >
 </#function>
 
-<#macro buildExample sqlParsed condition_var judgeNull=true indent="">
+<#macro buildExample sqlParsed condition_var judgeNull=true indent="" convertMap={}>
 <#assign opMap = {"=": "EqualTo", ">=": "GreaterThanOrEqualTo", "<=": "LessThanOrEqualTo", ">": "GreaterThan", "<": "LessThan"}>
 ${indent}        ${mapper.example.name} example = new ${mapper.example.name}();
     <#list sqlParsed.nodes as node_list>
@@ -23,21 +23,43 @@ ${indent}        ${mapper.example.name}.Criteria ${criteriaVar} = example.or();
             <#assign varName = utils.dashedToCamel(node.lhs.content)?cap_first>
             <#if opMap[node.content]??>
                 <#assign inputName = utils.dashedToCamel(node.rhs.content[1..])?cap_first>
+                <#assign getConditionStr = condition_var + ".get" + inputName + "()">
+                <#if convertMap[varName?uncap_first]??>
+                    <#if convertMap[varName?uncap_first][0] == 'Date'
+                    && convertMap[varName?uncap_first][1] == 'String'>
+                        <#assign withConvert = "DateUtil.parse(" + getConditionStr + ")">
+                    <#else>
+                        <#assign withConvert = getConditionStr>
+                    </#if>
+                <#else>
+                    <#assign withConvert = getConditionStr>
+                </#if>
             <#if judgeNull>
-${indent}        if (${condition_var}.get${inputName}() != null) {
-${indent}            ${criteriaVar}.and${varName}${opMap[node.content]}(${condition_var}.get${inputName}());
+${indent}        if (${getConditionStr} != null) {
+${indent}            ${criteriaVar}.and${varName}${opMap[node.content]}(${withConvert});
 ${indent}        }
             <#else>
-${indent}        ${criteriaVar}.and${varName}${opMap[node.content]}(${condition_var}.get${inputName}());
+${indent}        ${criteriaVar}.and${varName}${opMap[node.content]}(${withConvert});
             </#if>
             <#elseif node.content == 'in'>
                 <#assign inputName = utils.dashedToCamel(node.rhs.content)?cap_first>
+                <#assign getConditionStr = condition_var + ".get" + inputName + "()">
+                <#if convertMap[varName?uncap_first]??>
+                    <#if convertMap[varName?uncap_first][0] == 'Date'
+                    && convertMap[varName?uncap_first][1] == 'String'>
+                        <#assign withConvert = "DateUtil.parse(" + getConditionStr + ")">
+                    <#else>
+                        <#assign withConvert = getConditionStr>
+                    </#if>
+                <#else>
+                    <#assign withConvert = getConditionStr>
+                </#if>
             <#if judgeNull>
-${indent}        if (!CollectionUtils.isEmpty(${condition_var}.get${inputName}())) {
-${indent}            ${criteriaVar}.and${varName}In(${condition_var}.get${inputName}());
+${indent}        if (!CollectionUtils.isEmpty(${getConditionStr})) {
+${indent}            ${criteriaVar}.and${varName}In(${withConvert});
 ${indent}        }
             <#else>
-${indent}        ${criteriaVar}.and${varName}In(${condition_var}.get${inputName}());
+${indent}        ${criteriaVar}.and${varName}In(${withConvert});
             </#if>
             <#elseif node.content == 'is null'>
 ${indent}        ${criteriaVar}.and${varName}IsNull();

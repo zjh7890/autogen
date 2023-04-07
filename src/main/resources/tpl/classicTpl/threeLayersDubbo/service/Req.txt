@@ -1,0 +1,39 @@
+package ${packName};
+
+import lombok.Data;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.io.Serializable;
+
+// todo: 确定一下 validator notNull max min 的设置
+/**
+ * @author zjh
+ */
+@Data
+public class ${name} implements Serializable {
+<#if type == 'query'>
+    /**
+     * @Max(value = 100, message = "limit 最大不能超过 100")
+     * 分页页大小
+     **/
+    @NotNull
+    private Integer limit;
+
+    /**
+     * @Max(value = 10000, message = "offset 最大不能超过 10000")
+     * 分页偏移量
+     **/
+    @NotNull
+    private Integer offset;
+
+</#if>
+<#list sqlParsed.inputs as input>
+<#if __BASE[sqlParsed["input2VarMap"][input]].docToken?? && withComment?? && withComment == true>
+    ${__BASE[sqlParsed["input2VarMap"][input]].docToken.content}
+</#if>
+    private ${__BASE[sqlParsed["input2VarMap"][input]].type.name} ${input};
+
+</#list>
+}

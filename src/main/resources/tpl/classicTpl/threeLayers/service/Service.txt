@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.apache.ibatis.session.RowBounds;
+import cn.hutool.core.date.DateUtil;
 
 <#if type == 'query'>
 
@@ -36,7 +37,7 @@ public class ${name} {
 </#if>
 <#if type == 'query'>
     public static ${mapper.example.name} buildExample(${req.name} req) {
-        <@utils.buildExample sqlParsed=sqlParsed condition_var="req" />
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="req" convertMap=convertMap/>
         return example;
     }
 

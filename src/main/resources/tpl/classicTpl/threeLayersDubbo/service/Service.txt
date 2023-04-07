@@ -1,0 +1,102 @@
+<#import "./utils" as utils>
+package ${packName};
+
+import java.util.List;
+import java.util.Date;
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+import org.apache.ibatis.session.RowBounds;
+import cn.hutool.core.date.DateUtil;
+
+<#if type == 'query'>
+
+</#if>
+
+/**
+ * @author zjh
+ **/
+@Service
+public class ${name} {
+    <#assign mapper_instance = mapper.interName?uncap_first>
+    @Resource
+    private ${mapper.interName} ${mapper_instance};
+
+<#if converter??>
+    <#assign converter_instance = converter.name?uncap_first>
+    @Resource
+    private ${converter.name} ${converter_instance};
+
+</#if>
+<#if type == 'id'>
+    public ${service.dto.name} ${funcName}(${req.name} req) {
+        // todo: TPL 确定一下有没有 Blobs 函数
+        ${mapper.entity.name} obj = ${mapper_instance}.selectByPrimaryKey(req.getId());
+        return ${converter_instance}.convert2DtoDetail(obj);
+    }
+
+</#if>
+<#if type == 'query'>
+    public static ${mapper.example.name} buildExample(${req.name} req) {
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="req" convertMap=convertMap/>
+        return example;
+    }
+
+    public ${service.PageRes.name}<${dto.name}> ${funcName}(${req.name} req) {
+        ${mapper.example.name} example = buildExample(req);
+        long total = ${mapper_instance}.countByExample(example);
+        RowBounds bounds = new RowBounds(
+                        req.getOffset() != null ? req.getOffset() : RowBounds.NO_ROW_OFFSET,
+                        req.getLimit() != null ? req.getLimit() : RowBounds.NO_ROW_LIMIT
+                );
+        List<${mapper.entity.name}> objs =
+                ${mapper_instance}.selectByExampleWithRowbounds(example, bounds);
+        List<${dto.name}> dtos = ${converter_instance}.convert2Dtos(objs);
+        return new ${service.PageRes.name}<>(total, dtos);
+    }
+
+</#if>
+<#if type == 'add'>
+    <#-- 当删除条件只有 id 时, 用 deleteByPrimaryKey 删除 -->
+    public void ${funcName}(${req.name} req) {
+        ${mapper.entity.name} entity = ${converter_instance}.convert(req);
+        ${mapper_instance}.insertSelective(entity);
+    }
+
+</#if>
+<#if type == 'update'>
+    public void ${funcName}(${req.name} req) {
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="req" judgeNull=false/>
+        ${mapper.entity.name} entity = ${converter_instance}.convert(req);
+        ${mapper_instance}.updateByExampleSelective(entity, example);
+    }
+
+</#if>
+<#if type == 'upsert'>
+    public void ${funcName}(${req.name} req) {
+        ${mapper.entity.name} entity = ${converter_instance}.convert(req);
+        <#-- 设置if条件，带缩进控制 -->
+        if (<#list sqlParsed.inputs as input><#assign inputName = utils.dashedToCamel(input)?cap_first><#if input_index == 0>req.get${inputName}() != null<#else>
+                && req.get${inputName}() != null</#if></#list>) {
+            <@utils.buildExample sqlParsed=sqlParsed condition_var="req" judgeNull=false indent = "    "/>
+            ${mapper_instance}.updateByExampleSelective(entity, example);
+        } else {
+            ${mapper_instance}.insertSelective(entity);
+        }
+    }
+
+</#if>
+<#if type == 'delete'>
+    <#-- 当删除条件只有 id 时, 用 deleteByPrimaryKey 删除 -->
+<#if req??>
+    public void ${funcName}(${req.name} req) {
+        <@utils.buildExample sqlParsed=sqlParsed condition_var="req" judgeNull=false/>
+        ${mapper_instance}.deleteByExample(example);
+    }
+<#else>
+    public void deleteById(${__BASE["id"].type.name} id) {
+        ${mapper_instance}.deleteByPrimaryKey(id);
+    }
+</#if>
+
+</#if>
+}

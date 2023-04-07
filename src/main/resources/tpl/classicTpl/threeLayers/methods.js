@@ -47,6 +47,37 @@ function getServices() {
                     sql: "id = $id and ruleName = $myRuleName",
                 }
             ]
+        },
+        stu: {
+            ServiceName: "Stu",
+            url_prefix: "/stu",
+            TableName: "Stu",
+            withComment: true,
+            methods: [
+                {
+                    type: "id",
+                    sql: "id = $id",
+                },
+                {
+                    type: "query",
+                    sql: "stu_name = $stuName and age = $age and created_time > $created_time and updated_time > $updated_time",
+                },
+                {
+                    type: "add",
+                },
+                {
+                    type: "update",
+                    sql: "id = $id",
+                },
+                {
+                    type: "upsert",
+                    sql: "id = $id",
+                },
+                {
+                    type: "delete",
+                    sql: "id = $id",
+                }
+            ]
         }
     })
 }

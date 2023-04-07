@@ -1,5 +1,6 @@
 package org.example.easy.sql;
 
+import com.google.common.base.CaseFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.util.Assert;
@@ -59,23 +60,37 @@ public class SqlParser {
                     fetchVars(n, tmpVars, tmpInputs, tmpNotNullVar);
                     if (!CollectionUtils.isEmpty(tmpVars)
                     && !CollectionUtils.isEmpty(tmpInputs)) {
-                        input2VarMap.put(tmpInputs.get(0), tmpVars.get(0));
+                        input2VarMap.put(
+                                toLowerCamel(tmpInputs.get(0)),
+                                toLowerCamel(tmpVars.get(0))
+                                );
                     }
                     vars.addAll(tmpVars);
                     inputs.addAll(tmpInputs);
                     notNullVars.addAll(tmpNotNullVar);
                 }
             }
-            res.setVars(vars.stream().distinct().collect(Collectors.toList()));
-            res.setInputs(inputs.stream().distinct().collect(Collectors.toList()));
-            res.setNoJudgeNullVars(notNullVars.stream().distinct().collect(Collectors.toList()));
-            res.setJudgeNullVars(res.getVars().stream().filter(x -> !res.getNoJudgeNullVars().contains(x)).collect(Collectors.toList()));
+            res.setVars(vars.stream().distinct()
+                    .map(SqlParser::toLowerCamel).collect(Collectors.toList()));
+            res.setInputs(inputs.stream().distinct()
+                    .map(SqlParser::toLowerCamel).collect(Collectors.toList()));
+            res.setNoJudgeNullVars(notNullVars.stream().distinct()
+                    .map(SqlParser::toLowerCamel).collect(Collectors.toList()));
+            res.setJudgeNullVars(res.getVars().stream()
+                    .map(SqlParser::toLowerCamel).filter(x -> !res.getNoJudgeNullVars().contains(x)).collect(Collectors.toList()));
             res.setInput2VarMap(input2VarMap);
             return res;
         } catch (Exception e) {
             throw new RuntimeException("sql解析有误，是否是因为name等关键字导致，也可能是因为格式错误", e);
         }
 
+    }
+
+    public static String toLowerCamel(String s) {
+        if (s.contains("_")) {
+            return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, s);
+        }
+        return s;
     }
 
     public static void fetchVars(SqlNode node, List<String> vars, List<String> inputs, List<String> notNullVars) {

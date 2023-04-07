@@ -37,29 +37,18 @@ import java.util.stream.Collectors;
 
 import static org.example.easy.sql.SqlParser.parseSql;
 
+// 首先描述三个概念，
+// 1. layers：定义了层级结构及核心文件，
+// 2. methods，定义了层级结构文件下的方法，穿透layers，
+//    注意 methods 是于 layers 强绑定的存在，不存在 layers 变了，methods不用重新定义的情况
+// 3. project，赋予 layers 的path一系列变量以真实值
+// 4. service，此service与经典三层layers中的 service 不同，此 service 是一个实际实现，如 ServiceName: "Rule"
 /**
+ *
  * @Author: zjh
  */
 @Slf4j
 public class Gen {
-    /**
-     * - varchar 小于255byte  1byte overhead
-     * - varchar 大于255byte  2byte overhead
-     * <p>
-     * - tinytext 0-255 1 byte overhead
-     * - text 0-65535 byte 2 byte overhead
-     * - mediumtext 0-16M  3 byte overhead
-     */
-    public static final int TEXT = 5000;
-
-    public static final int LONG_TEXT = 50000;
-
-    public enum Bar {
-        EXPORT,
-        NOTNULL
-    }
-
-
     @SneakyThrows
     public static String resourceReadAll(String str) {
         InputStream inputStream = Gen.class.getClassLoader().getResourceAsStream(str);
@@ -81,26 +70,6 @@ public class Gen {
         return JsonKits.toJson(map);
     }
 
-    // 首先描述三个概念，
-// 1. layers：定义了层级结构及核心文件，
-// 2. methods，定义了层级结构文件下的方法，穿透layers，
-//    注意 methods 是于 layers 强绑定的存在，不存在 layers 变了，methods不用重新定义的情况
-// 3. project，赋予 layers 的path一系列变量以真实值
-// 4. service，此service与经典三层layers中的 service 不同，此 service 是一个实际实现，如 ServiceName: "Rule"
-
-
-    @Data
-    public static class A {
-        private String name = "zjh";
-    }
-
-    @Data
-    public static class B extends A {
-        private A add = new A();
-
-        private String address = "city";
-    }
-
     public static void fillMap(Map toFill, Map data, boolean excludeObj) {
         if (data == null) {
             return;
@@ -119,23 +88,33 @@ public class Gen {
     @SneakyThrows
     public static void main(String[] args) throws IOException {
         // TODO: 2023/3/30 改下面这几个
-//        ------------------
-        String project = "eagle";
-        String tpl = "threeLayers";
-        String method = "rule";
+////        ------------------
+//        // eagle
+//        String tplRoot = "classicTpl";
+//        String tpl = "threeLayers";
+//
+//        String project = "eagle";
+//        String method = "stu";
+
+                // dubbo
+        String tplRoot = "classicTpl";
+        String tpl = "threeLayersDubbo";
+
+        String project = "dubboMyServer";
+        String method = "stu";
 //        ------------------
 
         // 读取模板
         String layersStr = getPartStr(JsInServer.run(
-                String.format("tpl/%s/%s/config.js", project, tpl),
+                String.format("tpl/%s/%s/config.js", tplRoot, tpl),
                 "getLayers"),
                 "default");
         String projectsStr = getPartStr(JsInServer.run(
-                        String.format("tpl/%s/project.js", project),
+                        String.format("tpl/%s/project.js", tplRoot),
                         "getProjects"),
-                "default");
+                project);
         String servicesStr = getPartStr(JsInServer.run(
-                String.format("tpl/%s/%s/methods.js", project, tpl),
+                String.format("tpl/%s/%s/methods.js", tplRoot, tpl),
                 "getServices"),
                 method);
 
@@ -144,7 +123,7 @@ public class Gen {
         Map service = (Map) JsonKits.parse(servicesStr, Object.class);
         React tree = new React(new LinkedHashMap<>());
 
-        tree.set("TPL", String.format("%s/%s", project, tpl));
+        tree.set("TPL", String.format("%s/%s", tplRoot, tpl));
 
         layers.forEach((k, v) -> {
             tree.set((String)k, v);
@@ -173,69 +152,6 @@ public class Gen {
         generate(tree);
     }
 
-//    [[1, 2], 3] => [[1, 3], [2, 3]]
-//    [[1, [2, 4]], 3] => [[1, 3], [[2, 4], 3]] => [[1, 2, 3], [1, 4, 3]]
-//    [[1, [2, [4, 5]], 3]
-    public static final String CREATE_SQL_FORMAT = "CREATE TABLE `%s` (\n" +
-            "  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键id',\n" +
-            "%s" +
-            "  `created_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',\n" +
-            "  `updated_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',\n" +
-            "  PRIMARY KEY (`id`)\n" +
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='%s'";
-
-    public static String genSQL(TableParam tableParam) {
-        StringBuilder builder = new StringBuilder();
-        genSQLInner(tableParam, builder);
-        return builder.toString();
-    }
-
-    public static void genSQLInner(TableParam tableParam, StringBuilder builder) {
-        StringBuilder part = new StringBuilder();
-        for (ColumnParam column : tableParam.columns) {
-            if (Arrays.asList("id", "createdTime", "updatedTime").contains(column.name)) {
-                continue;
-            }
-            part.append(String.format("  `%s` %s %sCOMMENT '%s',\n",
-                    CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, column.name),
-                    getType(column.clazz, column.size),
-                    null,
-//                    CollectionUtils.isNotEmpty(column.bars) && column.bars.contains(NOTNULL) ? "NOT NULL " : "",
-                    column.desc));
-        }
-        String format = String.format(CREATE_SQL_FORMAT, CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, tableParam.name), part, tableParam.desc);
-        builder.append(format);
-    }
-
-    public static String getType(Class clazz, Integer size) {
-        if (clazz == Long.class) {
-            return "bigint(20)";
-        }
-        if (clazz == Integer.class) {
-            return "int(11)";
-        }
-        if (clazz == Date.class) {
-            return "datetime";
-        }
-        if (clazz == String.class) {
-            Assert.isTrue(size != null);
-            if (size >= LONG_TEXT) {
-                return "longtext COLLATE utf8mb4_unicode_ci";
-            } else if (size >= TEXT) {
-                return "text COLLATE utf8mb4_unicode_ci";
-            } else {
-                return String.format("varchar(%s) COLLATE utf8mb4_unicode_ci", size);
-            }
-        }
-        String errMsg = String.format("未知类, clazz: %s", clazz);
-        throw new RuntimeException(errMsg);
-    }
-
-    public static void createServiceFile(String name) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("name", name);
-        map.put("addTodo", "// todo: 上线前删除");
-    }
 
     @SneakyThrows
     public static void writeFile(String filepath, String content) {
@@ -459,22 +375,6 @@ public class Gen {
         render.exposeMap().remove("convertMap");
     }
 
-    public static class MyDao {
-        public Unit model;
-        public Unit converter;
-        public Unit repo;
-        public Unit repoImpl;
-        public Unit domain;
-        public Unit mapper;
-        public Unit mapperImpl;
-        public Unit example;
-    }
-
-    public static class EsDao {
-        public Unit model;
-        public Unit esService;
-    }
-
     private static Map<String, Object> genEnumMap(InterParam interParam) {
         StringBuilder enumItems = new StringBuilder();
         StringBuilder enumFields = new StringBuilder();
@@ -517,16 +417,6 @@ public class Gen {
         map.put("enumCons", StringUtils.join(enumCons, ", "));
         map.put("enumSet", enumSet.toString().trim());
         return map;
-    }
-
-    public static boolean hasBlobs(TableParam tableParam) {
-        for (ColumnParam column : tableParam.columns) {
-            String type = getType(column.clazz, column.size);
-            if (type.contains("text")) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @SneakyThrows

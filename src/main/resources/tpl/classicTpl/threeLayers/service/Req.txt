@@ -3,8 +3,10 @@ package ${packName};
 import lombok.Data;
 
 import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
+// todo: 确定一下 validator notNull max min 的设置
 /**
  * @author zjh
  */
@@ -12,15 +14,17 @@ import java.util.List;
 public class ${name} {
 <#if type == 'query'>
     /**
+     * @Max(value = 100, message = "limit 最大不能超过 100")
      * 分页页大小
      **/
-    @Max(value = 50, message = "limit 最大不能超过 50")
+    @NotNull
     private Integer limit;
 
     /**
+     * @Max(value = 10000, message = "offset 最大不能超过 10000")
      * 分页偏移量
      **/
-    @Max(value = 1000, message = "offset 最大不能超过 1000")
+    @NotNull
     private Integer offset;
 
 </#if>

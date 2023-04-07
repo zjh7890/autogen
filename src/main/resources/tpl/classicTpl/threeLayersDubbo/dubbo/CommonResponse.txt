@@ -1,0 +1,21 @@
+package ${packName};
+
+import lombok.Data;
+import java.io.Serializable;
+
+/**
+ * @Author: zjh
+ */
+@Data
+public class CommonResponse<T> implements Serializable {
+    private Integer code;
+    private String msg;
+    private T data;
+
+    public CommonResponse<T> success(T data) {
+        this.data = data;
+        this.code = 0;
+        this.msg = "success";
+        return this;
+    }
+}

@@ -1,0 +1,53 @@
+package ${packName};
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+
+import java.util.List;
+
+<#if type == 'query'>
+</#if>
+<#if type == 'delete'>
+</#if>
+/**
+ * @author zjh
+ **/
+@Mapper(componentModel = "spring")
+public interface ${name} {
+<#if type == 'id'>
+<#-- 设置类型转换 -->
+<#list convertMap? keys as key>
+    <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
+    || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
+    </#if>
+</#list>
+    ${service.dto.name} convert2DtoDetail(${mapper.entity.name} dto);
+
+</#if>
+<#if type == 'query'>
+<#-- 设置类型转换 -->
+<#list convertMap? keys as key>
+    <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
+    || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
+    </#if>
+</#list>
+    ${service.dto.name} convert2Dto(${mapper.entity.name} dto);
+
+    List<${service.dto.name}> convert2Dtos(List<${mapper.entity.name}> dtos);
+
+</#if>
+<#if type == 'add' || type == 'update' || type == 'upsert'>
+<#-- 设置类型转换 -->
+<#list convertMap? keys as key>
+    <#if (convertMap[key][0] == 'Date' && convertMap[key][1] == 'String')
+    || (convertMap[key][0] == 'String' && convertMap[key][1] == 'Date')>
+    @Mapping(target = "${key}", source = "${key}", dateFormat = "yyyy-MM-dd HH:mm:ss")
+    </#if>
+</#list>
+    ${mapper.entity.name} convert(${service.req.name} dto);
+
+</#if>
+}
