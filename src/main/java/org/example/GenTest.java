@@ -23,7 +23,7 @@ import static org.example.easy.sql.SqlParser.parseSql;
  */
 public class GenTest {
 
-    public static void main123(String[] args) throws InterruptedException {
+    public static void main12(String[] args) throws InterruptedException {
 //        String filename = "/Users/zjh/code/grocery-smart-inf-apollo/grocery-smart-inf-apollo-server/src/main/java/com/sankuai/grocerysmart/inf/apollo/server/CheckController.java";
 //        Unit unit = buildByFileName(filename);
 //        program.replaceElementOrAdd(BlockType.FUNC, "hello", "void hello(){// \"well done, my bro\"\n}");
