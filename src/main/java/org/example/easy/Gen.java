@@ -5,8 +5,12 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Response;
 import freemarker.cache.StringTemplateLoader;
+import freemarker.core.Environment;
+import freemarker.core.InvalidReferenceException;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import lombok.Builder;
@@ -100,8 +104,8 @@ public class Gen {
         String tplRoot = "classicTpl";
         String tpl = "threeLayersDubbo";
 
-        String project = "dubboMyServer";
-        String method = "stu";
+        String project = "livePortrait";
+        String method = "recall_2023_user";
 //        ------------------
 
         // 读取模板
@@ -430,11 +434,26 @@ public class Gen {
         return formatTpl(tpl, data);
     }
 
+    public static class IgnoreInvalidRef implements TemplateExceptionHandler {
+
+        @Override
+        public void handleTemplateException(TemplateException te, Environment env, Writer out) throws TemplateException {
+            if (te instanceof InvalidReferenceException) {
+//                log.info("没找到变量, msg: {}", te.getMessage());
+//                out.write();
+                System.out.println("ahah");
+            } else {
+                throw te;
+            }
+        }
+    }
+
     @SneakyThrows
     public static String formatTpl(String tpl, Map data) {
         /* 在整个应用的生命周期中，这个工作你应该只做一次。 */
         /* 创建和调整配置。 */
         Configuration cfg = new Configuration();
+        cfg.setTemplateExceptionHandler(new IgnoreInvalidRef());
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         stringLoader.putTemplate("utils", resourceReadAll("tpl/utils.txt"));
         stringLoader.putTemplate("myTemplate", tpl);

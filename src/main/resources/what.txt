@@ -1,0 +1,303 @@
+现状
+以 operation-service 为例，启动耗时长达 5 分钟，其他服务通常都要 2 分钟。
+
+观察耗时，找出原因
+1. 观察日志，看日志什么时候会卡一下，还有两条日志打印的时间间隔。
+2. 利用 IDEA Profiler 观察 CPU 负载，CPU负载掉到零一般说明进入了 IO 阶段，这部分一般可以优化
+
+3. 利用 BeanPostProcessor 扩展点打印出每个 Bean 的初始化耗时。
+启动慢的原因及优化方法
+3.1 Dubbo Service 和 Reference 多
+注：基本上注册一个服务需要 500ms，双注册中心，zk 和 nacos，每个都需要 200~300ms，注册慢应该是网络 RountTrip 耗时较高导致，这部分占了项目启动的大部分时间。
+
+优化方法：懒加载
+具体做法：在单测目录下覆写 Spring 类和 Dubbo 类，暴力设置懒加载，改动点用 xxx_change_start 标记出来，用以区别原来的代码。
+注：JVM 的类加载机制提供保证，覆写能够生效。
+
+------------------------
+
+优化效果：懒加载对于 operation-service 的优化效果是显著的，启动耗时由 5 分钟变成了 1 分钟。
+3.2 DataSource 初始化耗时。
+由日志打印时间观察可得（最后两条日志打印时间，一条 16 秒，一条 18 秒），一个 DataSource 初始化大约需要 2.5 秒，以 live-operation 为例，存在 9 个数据源，耗时约 22 秒。
+
+
+
+优化方法：Druid 提供了数据源异步加载，设置 druid.asyncInit 为 true 即可
+
+优化效果：挺好，operation 启动耗时由 1分7秒降到了 42 秒
+3.3 其他优化
+MacOS 优化 idea项目启动时间
+修改 hosts：127.0.0.1 localhost <hostname>.local
+优化效果：此方法优化效果可能跟 idea 版本有关，推荐加上。
+3.4 kafka初始化
+@EnableKafkaConfiguration注解新增了参数skipInitialization，默认为false不开启跳过kafka中Producer/Consumer的初始化流程，指定为true则开启跳过Producer/Consumer初始化流程。对应代码发布至test环境，不会生效。即对应代码可不回滚。
+3.5 dubbo provider注册优化
+● 配置dubbo.service.scope=none（scope!=remote时，本地暴露，scope=remote时，远程暴露）
+● 默认情况下，Dubbo会扫描所有的classes，以便发现所有的Dubbo服务提供者和服务消费者。如果应用的服务数量较大，Dubbo容器会需要较长的时间才能完成扫描。为了避免这种情况，可以手动指定要扫描的包和类。dubbo版本>=2.7可使用@DubboComponentScan注解，低版本可配置dubbo.scan.base-packages（默认是com.yupaopao）
+● 若需要暴露服务，为了不让测试环境其他请求打入本地，影响测试环境体验和本地单测效率，可设置版本。针对某些具体服务进行版本控制(@DubboService中指定版本，针对所有服务进行版本控制可使用配置dubbo.provider.version)
+3.6 dubbo consumer注册优化
+● 检查合理的超时时间：合理设置超时时间，避免一些无法解决的网络问题导致consumer端一直等待，实现更快的响应时间。
+    ○ 设置延迟注册：Dubbo支持设置Consumer的延迟注册时间，即等到需要调用服务时再进行注册。可以通过设置dubbo.consumer.register=false配置项进行延迟注册。
+懒加载失效排查方法及可能原因
+排查方法：在 @PostConstruct 方法打断点，观察为什么被加载了
+可能原因：
+1. 懒加载没有设置成功。可以观察 beanFactory 中的 beanDefinition 的 lazyInit 是否为 true
+2. 懒加载设置成功，但是被其他 bean 引用了，然后就加载了，如下图 AnchorCreditManager 和 creditRemoteService 的关系。
+@DubboService，@AriesDelayJobListener 这两个注解，通常引用了其他的 bean，作为 根 bean 导致了其他的 bean 懒加载失效，通过覆盖源码强制修改逻辑。
+
+如何迁移到其他项目
+设置懒加载
+做法：把 GlobalLazyProcessor 放到单测目录下，需要能被扫描到，打个断点确定被执行了
+@Component
+public class GlobalLazyProcessor implements BeanFactoryPostProcessor {
+
+    @Override
+    public void postProcessBeanFactory( ConfigurableListableBeanFactory beanFactory ) throws BeansException {
+        // 跳过设置懒加载的类
+        List<String> skipClassNames = Arrays.asList("org.apache.dubbo.config.ApplicationConfig",
+                "org.apache.dubbo.config.ConsumerConfig",
+                "org.apache.dubbo.config.MetadataReportConfig",
+                "org.apache.dubbo.config.MetricsConfig",
+                "org.apache.dubbo.config.ModuleConfig",
+                "org.apache.dubbo.config.MonitorConfig",
+                "org.apache.dubbo.config.ProtocolConfig",
+                "org.apache.dubbo.config.ProviderConfig",
+                "org.apache.dubbo.config.ReferenceConfig",
+                "org.apache.dubbo.config.RegistryConfig",
+                "org.apache.dubbo.config.SslConfig");
+        for ( String name : beanFactory.getBeanDefinitionNames() ) {
+            BeanDefinition definition = beanFactory.getBeanDefinition(name);
+//            跳过设置懒加载
+            if (skipClassNames.contains(definition.getBeanClassName())) {
+                continue;
+            }
+            definition.setLazyInit( true );
+        }
+    }
+}
+数据源异步初始化
+做法：单测类通过静态代码块设置系统变量，每个单测文件都要设置，
+    static {
+        System.setProperty("druid.asyncInit", "true");
+    }
+创建 application-unittest.properties，application.properties同级
+内容如下
+# do not register dubbo provider to remote
+dubbo.provider.scope=injvm
+# unittest needn't boot aries
+spring.autoconfigure.exclude=com.yupaopao.framework.spring.boot.aries.AriesAutoConfiguration
+# this config only works in springboot 2.2 and above
+spring.main.lazy-initialization=true
+
+要在单测文件中引入
+properties = "spring.profiles.active=local,unittest"
+
+覆盖源代码
+单测目录下拷一份 com.alibaba.spring.beans.factory.annotation.AbstractAnnotationBeanPostProcessor 的代码，注意包路径一致，然后把 AnnotatedFieldElement inject 函数替换成以下内容
+AnnotatedFieldElement
+AnnotatedFieldElement
+AnnotatedFieldElement
+旁边还有个 AnnotatedMethodElement，别搞错了，只替换 AnnotatedFieldElement 就行
+替换前：
+替换后：
+@Override
+        protected void inject(Object bean, String beanName, PropertyValues pvs) throws Throwable {
+
+            Class<?> injectedType = resolveInjectedType(bean, field);
+
+            //        xxx_change_start  设置 DubboReference bean 代理延迟加载
+            Object injectedObject;
+            if (Arrays.stream(field.getAnnotations()).anyMatch(x -> DubboReference.class.equals(x.annotationType())
+                    || org.apache.dubbo.config.annotation.Reference.class.equals(x.annotationType())
+                    || com.alibaba.dubbo.config.annotation.Reference.class.equals(x.annotationType()))) {
+                // 异步初始化
+                injectedObject = buildAsyncInitInjectedObject(attributes, bean, beanName, injectedType, this);
+            } else {
+                injectedObject = getInjectedObject(attributes, bean, beanName, injectedType, this);
+            }
+
+            ReflectionUtils.makeAccessible(field);
+            field.set(bean, injectedObject);
+            //        xxx_change_end
+        }
+
+        protected Object buildAsyncInitInjectedObject(AnnotationAttributes attributes, Object bean, String beanName, Class<?> injectedType,
+                                                      InjectionMetadata.InjectedElement injectedElement) {
+            TargetSource ts = new AsyncInitTargetSource(attributes, bean, beanName, injectedType, injectedElement);
+            ProxyFactory pf = new ProxyFactory();
+            pf.setTargetSource(ts);
+            if (injectedType.isInterface()) {
+                // 当引用类为接口时，ProxyFactory会使用JDK动态代理实现；其他时候使用Cglib动态代理实现
+                pf.addInterface(injectedType);
+            }
+            return pf.getProxy(classLoader);
+        }
+
+        public class AsyncInitTargetSource implements TargetSource {
+            private final AnnotationAttributes attributes;
+            private final Object bean;
+            private final String beanName;
+            private final InjectionMetadata.InjectedElement injectedElement;
+            CompletableFuture<Object> future;
+            Class<?> injectedType;
+
+            public AsyncInitTargetSource(AnnotationAttributes attributes, Object bean, String beanName, Class<?> injectedType,
+                                         InjectionMetadata.InjectedElement injectedElement) {
+                this.attributes = attributes;
+                this.bean = bean;
+                this.beanName = beanName;
+                this.injectedType = injectedType;
+                this.injectedElement = injectedElement;
+                // 异步初始化
+//                this.future = CompletableFuture.supplyAsync(() -> {
+//                    try {
+//                        return getInjectedObject(attributes, bean, beanName, injectedType, injectedElement);
+//                    } catch (Exception e) {
+//                        throw new RuntimeException("异步初始化出错", e);
+//                    }
+//                });
+            }
+
+            @Override
+            public Class<?> getTargetClass() {
+                return injectedType;
+            }
+            @Override
+            public boolean isStatic() {
+                return false;
+            }
+            // getTarget()中包含了实际创建对象的方法
+            @Override
+            public Object getTarget() throws Exception {
+//                // 实际创建对象
+                try {
+                    return getInjectedObject(attributes, bean, beanName, injectedType, injectedElement);
+                } catch (Exception e) {
+                    throw new NoSuchBeanDefinitionException("Optional dependency not present for lazy injection point");
+                }
+//                return future.get();
+            }
+            @Override
+            public void releaseTarget(Object target) {
+            }
+        }
+可能引入的问题
+1. ApplicationContextAware 类没进行实例化，因此 applicationContext 空了。
+@Override
+    public void postProcessBeanFactory( ConfigurableListableBeanFactory beanFactory ) throws BeansException {
+        // 跳过设置懒加载的类
+        List<String> skipClassNames = Arrays.asList("org.apache.dubbo.config.ApplicationConfig",
+                "org.apache.dubbo.config.ConsumerConfig",
+                "org.apache.dubbo.config.MetadataReportConfig",
+                "org.apache.dubbo.config.MetricsConfig",
+                "org.apache.dubbo.config.ModuleConfig",
+                "org.apache.dubbo.config.MonitorConfig",
+                "org.apache.dubbo.config.ProtocolConfig",
+                "org.apache.dubbo.config.ProviderConfig",
+                "org.apache.dubbo.config.ReferenceConfig",
+                "org.apache.dubbo.config.RegistryConfig",
+                "org.apache.dubbo.config.SslConfig");
+        for ( String name : beanFactory.getBeanDefinitionNames() ) {
+            BeanDefinition definition = beanFactory.getBeanDefinition(name);
+//            跳过设置懒加载
+            if (skipClassNames.contains(definition.getBeanClassName())) {
+                continue;
+            }
+            definition.setLazyInit( true );
+        }
+    }
+
+附：单测技巧
+    a. RESET FRAME （回退）
+    b. Evaluate Expression （表达式计算）
+    c. HOT SWAP （热部署） 具体操作可参考
+本文优化思路参考：https://tech.yupaopao.com/article/f5ca7db84d5239a5，推荐看看
+
+idea集成JRebel：
+JRebel是一套JavaEE开发工具。Jrebel 可快速实现热部署，节省了大量重启时间，提高了个人开发效率。JRebel是一款JAVA虚拟机插件，它使得JAVA程序员能在不进行重部署的情况下，即时看到代码的改变对一个应用程序带来的影响。JRebel使你能即时分别看到代码、类和资源的变化，你可以一个个地上传而不是一次性全部部署。当程序员在开发环境中对任何一个类或者资源作出修改的时候，这个变化会直接反应在部署好的应用程序上，从而跳过了构建和部署的过程，可以省去大量的部署用的时间。
+JRebel是一款JVM插件，它使得Java代码修改后不用重启系统，立即生效。IDEA上原生是不支持热部署的，一般更新了 Java 文件后要手动重启 Tomcat 服务器，才能生效，浪费时间浪费生命。目前对于idea热部署最好的解决方案就是安装JRebel插件。
+1.安装插件 File->settings->plugins 搜索jrebel。安装完成后，重启idea。
+
+2.激活JRebel。jrebel需要激活才能使用，打开jrebel 激活面板 ，选择Connect to online licensing service
+
+url地址：https://jrebel.qekang.com/cc911d10-7326-4ded-8daf-967837a07792
+如果地址失效，可以在线生成GUID，并替换：https://www.guidgen.com/
+若激活插件失败，提示LS client not configued，原因是版本过高，需要手动下载JRebel。去官网找到过去版本的JRebel。https://plugins.jetbrains.com/plugin/4441-jrebel-and-xrebel/versions。下载之前的版本放到一个文件夹里手动安装插件：File->Settings->Plugins选择安装本地插件。
+jrebel激活之后默认是网使用的 , 在该模式下 , jrebel会一直联网监测激活信息，会定期去请求jrebel服务器，会导致破解失败。所以需要调为离线使用的，直接点击下图中Work offline按钮即可。
+
+
+开启自动编译（这一步视自己的情况选择，有的时候可能写了好多代码之后才需要编译一次）Shift+Ctrl+Alt+/，选择Registry，勾选compiler。
+
+若找不到这个页面的，很有可能是idea版本较新，请到Settings面板的Advanced Settings勾选Allow auto-make to start even if developed application is currently running。
+
+
+运行配置调整，将下面的两个选项框换成 Update classes and resources ，表示会自动更新变更的类和资源。
+更新时做的操作 Update classes and resources 更新类和资源
+失去焦点时做的操作 Update classes and resources 更新类和资源
+如果平时切屏比较频繁，可以不设置失去焦点的操作，否则切屏的时候电脑就会变得比较卡(因为会很频繁地重新编译)，可以主动切换至需要热部署的文件(Recompile)，重编译；若修改的文件比较多，可选择重新构建(Build Project)。
+
+设置需要热部署的项目
+
+注意⚠️，勾选完会生成rebel.xml文件，此文件会记录本地工程的class目录。
+
+写的是绝对路径，如果项目路径发生变更，需要手动变更。
+运行。想要通过 JRebel 运行程序，下图两个分别是运行和Debug选型，通过他们来运行应用即可。
+
+启动项目出现bean重复or找不到某个类，编译未生效等问题：idea进入Project Structure->Modules->选择对应项目->选择JRebel->点击Regenerate xml configuration重新生成xml，重新使用JRebel启动试试。
+效果。代码修改完后，鼠标点击 IDEA 窗口外的任意位置，便会触发类重新加载，此时会打印如下的日志，说明重新加载成功了。
+若junit单测场景不生效，先检查junit喝jrebel版本是否兼容。
+
+
+
+
+jrebel启动服务以后，若代码发生变更，重新build。
+配置jrebel成功的启动日志：
+
+
+热部署重新加载的修改类
+
+
+
+
+下面不用看
+1. 用 IDEA 分析启动耗时
+
+结果：
+
+
+
+
+org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions
+org.springframework.context.annotation.ClassPathBeanDefinitionScanner#doScan
+org.springframework.context.annotation.ComponentScanAnnotationParser#parse
+
+AnnotatedGenericBeanDefinition'
+
+
+RequestMapping 懒加载
+
+[DUBBO] Load service store file
+
+Reference 通过 postProcessor 搞进去的
+
+DubboService 引入 DubboReference
+
+Scan DubboService org.apache.dubbo.config.spring.beans.factory.annotation.ServiceClassPostProcessor
+
+
+dubboConfigEarlyRegistrationPostProcessor
+
+
+org.apache.dubbo.config.spring.schema.DubboBeanDefinitionParser
+
+org.apache.dubbo.registry.support.AbstractRegistry#subscribe
+
+StreamRemoteService
+
+com.yupaopao.framework.spring.boot.common.inject.AbstractAutowiredBeanRegistrar#register
+
+com.alibaba.druid.pool.DruidDataSource
+druid.asyncInit
+
+
+

@@ -9,40 +9,24 @@ function getLayers() {
                     // 文件
                     // 包含path的变量一般指包路径
                     layerName: "dubbo",
-                    name: "${ServiceName}DubboImpl",
+                    name: "${ServiceName}ServiceImpl",
                     path: "${PROJECT_DUBBO_PATH}",
                     tpl: "${TPL}/dubbo/Dubbo.txt",
 
-                    interName: "${TableName}Dubbo",
+                    interName: "${TableName}Service",
                     interPath: "${PROJECT_DUBBO_INTER_PATH}",
                     interTpl: "${TPL}/dubbo/DubboInter.txt",
 
                     couldDepends: {
-                        CommonPageResponse: {
-                            name: "CommonPageResponse",
-                            path: "${TPL_BASE_OBJ_PATH}",
-                            tpl: "${TPL}/dubbo/CommonPageResponse.txt"
-                        },
-                        CommonResponse: {
-                            name: "CommonResponse",
-                            path: "${TPL_BASE_OBJ_PATH}",
-                            tpl: "${TPL}/dubbo/CommonResponse.txt"
-                        },
                     },
                     // 模板的依赖，如果改变模板，模板相关
                     depends: [
-                        {
-                            dependName: "CommonPageResponse"
-                        },
-                        {
-                            dependName: "CommonResponse"
-                        }
                     ]
                 },
                 // 2
                 {
                     layerName: "service",
-                    name: "${ServiceName}Service",
+                    name: "${ServiceName}Manager",
                     path: "${PROJECT_SERVICE_PATH}",
                     tpl: "${TPL}/service/Service.txt",
                     typeinfo: [
@@ -53,21 +37,8 @@ function getLayers() {
                         }
                     ],
                     couldDepends: {
-                        PageRes: {
-                            name: "PageRes",
-                            path: "${TPL_BASE_OBJ_PATH}",
-                            tpl: "${TPL}/service/PageRes.txt"
-                        },
-                        converter: {
-                            name: "${ServiceName}Converter",
-                            path: "${PROJECT_SERVICE_CONVERTER_PATH}",
-                            tpl: "${TPL}/service/Converter.txt",
-                        },
                     },
                     depends: [
-                        {
-                            dependName: "PageRes"
-                        }
                     ]
                 },
                 {
@@ -78,10 +49,6 @@ function getLayers() {
                     interPath: "${PROJECT_MAPPER_INTER_PATH}",
 
                     couldDepends: {
-                        example: {
-                            name: "${TableName}Example",
-                            path: "${PROJECT_MAPPER_EXAMPLE_PATH}"
-                        },
                         entity: {
                             name: "${TableName}",
                             path: "${PROJECT_MAPPER_ENTITY_PATH}",
@@ -89,9 +56,6 @@ function getLayers() {
                         }
                     },
                     depends: [
-                        {
-                            dependName: "example"
-                        },
                         {
                             dependName: "entity"
                         }
@@ -106,38 +70,24 @@ function getLayers() {
                     methodLayers: {
                         dubbo: {
                             // 函数
-                            funcName: "query${ServiceName}ById",
-                            http_method: "Post",
-                            url: "/queryById",
+                            funcName: "find${ServiceName}ById",
                         },
                         service: {
-                            funcName: "query${ServiceName}ById",
+                            funcName: "find${ServiceName}ById",
                             couldDepends: {
-                                req: {
-                                    name: "${ServiceName}IdReq",
-                                    path: "${PROJECT_DUBBO_REQ_PATH}",
-                                    tpl: "${TPL}/service/Req.txt"
-                                },
                                 dto: {
-                                    name: "${ServiceName}Dto",
+                                    name: "${ServiceName}DTO",
                                     path: "${PROJECT_DUBBO_RES_PATH}",
-                                    tpl: "${TPL}/service/Dto.txt"
+                                    tpl: "${TPL}/service/DTO.txt"
                                 }
                             },
                             depends: [
-                                {
-                                    dependName: "converter"
-                                },
-                                {
-                                    dependName: "req"
-                                },
                                 {
                                     dependName: "dto"
                                 }
                             ]
                         },
                         mapper: {
-                            methodHello2: "hello"
                         }
                     },
                 },
@@ -149,8 +99,6 @@ function getLayers() {
                         dubbo: {
                             // 函数
                             funcName: "query${ServiceName}",
-                            http_method: "Post",
-                            url: "/query",
                         },
                         service: {
                             funcName: "query${ServiceName}",
@@ -162,15 +110,12 @@ function getLayers() {
                                     tpl: "${TPL}/service/Req.txt"
                                 },
                                 dto: {
-                                    name: "${ServiceName}QueryDto",
+                                    name: "${ServiceName}QueryDTO",
                                     path: "${PROJECT_DUBBO_RES_PATH}",
-                                    tpl: "${TPL}/service/Dto.txt"
+                                    tpl: "${TPL}/service/DTO.txt"
                                 }
                             },
                             depends: [
-                                {
-                                    dependName: "converter"
-                                },
                                 {
                                     dependName: "req"
                                 },
@@ -180,7 +125,6 @@ function getLayers() {
                             ]
                         },
                         mapper: {
-                            methodHello2: "hello"
                         }
                     },
                 },
@@ -202,21 +146,17 @@ function getLayers() {
                                 req: {
                                     name: "${ServiceName}AddReq",
                                     path: "${PROJECT_DUBBO_REQ_PATH}",
-                                    // 这边复用了 Dto 的模板
-                                    tpl: "${TPL}/service/Dto.txt"
+                                    // 这边复用了 DTO 的模板
+                                    tpl: "${TPL}/service/DTO.txt"
                                 }
                             },
                             depends: [
-                                {
-                                    dependName: "converter"
-                                },
                                 {
                                     dependName: "req"
                                 }
                             ]
                         },
                         mapper: {
-                            methodHello2: "hello"
                         }
                     },
                 },
@@ -237,13 +177,10 @@ function getLayers() {
                                 req: {
                                     name: "${ServiceName}UpdateReq",
                                     path: "${PROJECT_DUBBO_REQ_PATH}",
-                                    tpl: "${TPL}/service/Dto.txt"
+                                    tpl: "${TPL}/service/DTO.txt"
                                 }
                             },
                             depends: [
-                                {
-                                    dependName: "converter"
-                                },
                                 {
                                     dependName: "req"
                                 },
@@ -272,14 +209,11 @@ function getLayers() {
                                 req: {
                                     name: "${ServiceName}UpsertReq",
                                     path: "${PROJECT_DUBBO_REQ_PATH}",
-                                    // 这边复用了 Dto 的模板
-                                    tpl: "${TPL}/service/Dto.txt"
+                                    // 这边复用了 DTO 的模板
+                                    tpl: "${TPL}/service/DTO.txt"
                                 }
                             },
                             depends: [
-                                {
-                                    dependName: "converter"
-                                },
                                 {
                                     dependName: "req"
                                 }
@@ -311,10 +245,6 @@ function getLayers() {
                                 }
                             },
                             depends: [
-                                {
-                                    on: "return (binding.hasVariable('repository') && repository['condition'] != null)",
-                                    dependName: "converter"
-                                },
                                 {
                                     dependName: "req"
                                 }

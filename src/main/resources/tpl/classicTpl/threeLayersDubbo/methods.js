@@ -78,6 +78,37 @@ function getServices() {
                     sql: "id = $id",
                 }
             ]
+        },
+        recall_2023_user: {
+            ServiceName: "Recall2023User",
+            url_prefix: "/Recall2023User",
+            TableName: "Recall2023User",
+            withComment: true,
+            methods: [
+                {
+                    type: "id",
+                    sql: "id = $id",
+                },
+                {
+                    type: "query",
+                    sql: "uid = $uid",
+                },
+                {
+                    type: "add",
+                },
+                {
+                    type: "update",
+                    sql: "id = $id",
+                },
+                {
+                    type: "upsert",
+                    sql: "id = $id",
+                },
+                {
+                    type: "delete",
+                    sql: "id = $id",
+                }
+            ]
         }
     })
 }

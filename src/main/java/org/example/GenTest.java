@@ -37,7 +37,7 @@ public class GenTest {
         }
 
 
-    public static void main(String[] args) {
+    public static void main1(String[] args) {
         if (true) {
 //            DateUtil.parseDate()
         }
@@ -62,6 +62,15 @@ public class GenTest {
 //        Object parse1 = JsonKits.parse(parse, Object.class);
 //        new ObjectMapper().readV
 //        System.out.println(parse1);
+    }
+
+    public static void main(String[] args) {
+        Map map = new HashMap();
+
+        map.put("name", "zjh");
+
+        String x = formatTpl("${name1} hahah", map);
+        System.out.println(x);
     }
 
 

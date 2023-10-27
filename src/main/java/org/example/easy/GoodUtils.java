@@ -1,5 +1,7 @@
 package org.example.easy;
 
+import com.jayway.jsonpath.JsonPath;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -77,5 +79,8 @@ public class GoodUtils {
             res.add(obj);
         }
         return res;
+    }
+
+    public static void main(String[] args) {
     }
 }

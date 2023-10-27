@@ -41,8 +41,22 @@ function getProjects() {
             PROJECT_MAPPER_PATH: "/my-server/src/main/java/com/example/myserver/mapper",
             PROJECT_MAPPER_EXAMPLE_PATH: "/my-server/src/main/java/com/example/myserver/entity",
             PROJECT_MAPPER_ENTITY_PATH: "/my-server/src/main/java/com/example/myserver/entity",
+        },
+        livePortrait: {
+            PROJECT_PATH: "/Users/dz0400186/IdeaProjects/live-portrait-service",
+            PROJECT_DUBBO_PATH: "/live-portrait-core/src/main/java/com/yupaopao/xxq/live/potrait/core/service",
+            PROJECT_DUBBO_REQ_PATH: "/live-portrait-api/src/main/java/com/yupaopao/xxq/live/potrait/api/request",
+            PROJECT_DUBBO_RES_PATH: "/live-portrait-api/src/main/java/com/yupaopao/xxq/live/potrait/api/dto",
+            PROJECT_DUBBO_INTER_PATH: "/live-portrait-api/src/main/java/com/yupaopao/xxq/live/potrait/api/service",
+            // TPL 都是模板相关的，不一定都需要
+            // TPL_BASE_OBJ_PATH: "/live-portrait-api/src/main/java/org/example/client/dubbo/dto",
 
-
+            PROJECT_SERVICE_PATH: "/live-portrait-core/src/main/java/com/yupaopao/xxq/live/potrait/core/manager",
+            // PROJECT_SERVICE_CONVERTER_PATH: "/live-portrait-core/src/main/java/com/example/myserver/service/converter",
+            PROJECT_MAPPER_INTER_PATH: "/live-portrait-core/src/main/java/com/yupaopao/xxq/live/potrait/core/dao",
+            // PROJECT_MAPPER_PATH: "/live-portrait-core/src/main/java/com/yupaopao/xxq/live/potrait/core/dao/",
+            // PROJECT_MAPPER_EXAMPLE_PATH: "/live-portrait-core/src/main/java/com/example/myserver/entity",
+            PROJECT_MAPPER_ENTITY_PATH: "/live-portrait-core/src/main/java/com/yupaopao/xxq/live/potrait/core/dao/data",
         }
     })
 }

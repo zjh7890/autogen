@@ -1,6 +1,11 @@
 package ${interPackName};
 
 import java.util.List;
+import com.yupaopao.platform.common.dto.PageResult;
+import com.yupaopao.platform.common.dto.Response;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author zjh
