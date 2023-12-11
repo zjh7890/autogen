@@ -65,6 +65,9 @@ public class GenTest {
 
         map.put("name", "zjh");
 
+        String ack = null;
+        System.out.println(ack.length());
+
         String x = formatTpl("tell ${kk} me why ${name1} hahah", map);
         System.out.println(x);
     }
