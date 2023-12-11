@@ -1,7 +1,6 @@
 package org.example.easy;
 
 
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Response;
 import freemarker.cache.StringTemplateLoader;
@@ -19,11 +18,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.example.JsInServer;
-import org.example.easy.gene.*;
-import org.example.easy.parser.BlockType;
+import org.example.easy.gene.InterParam;
 import org.example.easy.parser.Unit;
 import org.example.easy.parser.Var;
-import org.example.easy.shepherd.*;
+import org.example.easy.shepherd.BeanMaker;
+import org.example.easy.shepherd.CallInfoParam;
+import org.example.easy.shepherd.OptionReq;
 import org.example.easy.sql.SqlParser;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -440,7 +440,11 @@ public class Gen {
         public void handleTemplateException(TemplateException te, Environment env, Writer out) throws TemplateException {
             if (te instanceof InvalidReferenceException) {
 //                log.info("没找到变量, msg: {}", te.getMessage());
-//                out.write();
+                try {
+                    out.write("$$_PARSE_GG");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 System.out.println("ahah");
             } else {
                 throw te;

@@ -1,21 +1,17 @@
 package org.example;
 
-import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import org.example.easy.JsonKits;
-import org.example.easy.sql.SqlParser;
 import org.example.proxy.BaseHandler;
 import org.example.proxy.MapHandler;
 
-import java.io.File;
-import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.example.easy.Gen.formatTpl;
 import static org.example.easy.Gen.resourceReadAll;
-import static org.example.easy.sql.SqlParser.parseSql;
 
 /**
  * @Author: zjh
@@ -69,7 +65,7 @@ public class GenTest {
 
         map.put("name", "zjh");
 
-        String x = formatTpl("${name1} hahah", map);
+        String x = formatTpl("tell ${kk} me why ${name1} hahah", map);
         System.out.println(x);
     }
 
